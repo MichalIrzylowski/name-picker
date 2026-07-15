@@ -106,8 +106,11 @@ Facts established by probing the API — each one bit during research, so don't 
 10. **No auth.** Private family app; whoever has the link can vote as any profile they pick.
     Matches the design.
 11. **Trend/Popularity are derived server-side**, and the client receives a lean per-Name
-    view (`name, gender, cat, trend, registerCount`). Raw `counts` and cohort totals never
-    reach the browser. This keeps ADR 0002's rule in code while keeping the payload small.
+    view (`name, gender, popularity, trend, registerCount`). Raw `counts` and cohort totals
+    never reach the browser. This keeps ADR 0002's rule in code while keeping the payload
+    small. The field is named `popularity`, not `cat` — CONTEXT.md's glossary explicitly
+    lists `cat` under Popularity's *Avoid*. `trend` is omitted entirely (not `null`) for
+    names below the 25-count floor.
 12. **Names are fetched once and cached; only family state is polled.** Names change only on
     re-seed. Do *not* return 3,544 names from the polled endpoint.
 13. **Polling, not websockets** — the client refetches `/api/state` every few seconds while
@@ -187,8 +190,10 @@ Facts established by probing the API — each one bit during research, so don't 
 **API (Route Handlers)**
 
 - `src/app/api/names/route.ts` — `GET`: lean view of all 3,544
-  (`{ name, display, gender, cat, trend, registerCount, inDeck }`), Trend/Popularity derived
-  server-side. Cached aggressively; changes only on re-seed.
+  (`{ name, display, gender, popularity, trend, registerCount, inDeck }`), Trend/Popularity
+  derived server-side. `trend` omitted for names below the 25-count floor. Cached via Next.js
+  route segment caching (`revalidate`) rather than manual headers — it only changes on
+  re-seed, so a redeploy is the natural cache-bust.
 - `src/app/api/state/route.ts` — `GET`: `{ participants, votes, notes, surname }` only.
   Votes/notes shaped as nested maps mirroring the design's `SEED_VOTES`/`SEED_NOTES` so the
   client logic ports directly. This is the polled endpoint — **no names**.
