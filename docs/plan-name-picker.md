@@ -191,9 +191,10 @@ Facts established by probing the API — each one bit during research, so don't 
 
 - `src/app/api/names/route.ts` — `GET`: lean view of all 3,544
   (`{ name, display, gender, popularity, trend, registerCount, inDeck }`), Trend/Popularity
-  derived server-side. `trend` omitted for names below the 25-count floor. Cached via Next.js
-  route segment caching (`revalidate`) rather than manual headers — it only changes on
-  re-seed, so a redeploy is the natural cache-bust.
+  derived server-side. `trend` omitted for names below the 25-count floor. `dynamic =
+  "force-dynamic"` plus a long `Cache-Control` header, not static `revalidate` — static route
+  generation would require a live DB connection during `next build`, which this project's
+  build environment doesn't guarantee.
 - `src/app/api/state/route.ts` — `GET`: `{ participants, votes, notes, surname }` only.
   Votes/notes shaped as nested maps mirroring the design's `SEED_VOTES`/`SEED_NOTES` so the
   client logic ports directly. This is the polled endpoint — **no names**.
@@ -230,8 +231,12 @@ template/logic, restyled with Tailwind + a few inline styles for dynamic colours
 
 - `npm run fetch-names` — assert 14 cohort resources + 2 register resources matched, 3,544
   names written, 353 in deck, and spot-check that `JAN.registerCount == 462503` (not 14) and
-  `LAURA.trend == 'up'` (not 'down'). These two are the regression tests for the join and the
-  share bug respectively.
+  `ADA.trend == 'up'` (not 'down' or 'stable'). These two are the regression tests for the
+  join and the share bug respectively. (LAURA, ADR 0002's illustrative example, is not a
+  usable regression case here — its real 2019-2025 trajectory peaked in 2021 and has declined
+  every year since, so the literal 3-year trend window correctly reports it `stable`; the
+  ADR's "+52.7%" figure is a 2019-vs-2025 comparison, a different question from the product's
+  3-year window.)
 - `npm run lint` and `npm run build` must pass.
 - `npm run dev`, walk the golden path: onboarding → add/pick a profile → swipe a card in all
   3 directions → list tab filters/search, including searching for a name *outside* the deck

@@ -12,7 +12,7 @@
     "lint": "eslint",
     "fetch-names": "node scripts/fetch-names.ts",
     "seed-names": "node --env-file-if-exists=.env.local scripts/seed-names.ts",
-    "test": "node --test scripts/**/*.test.ts"
+    "test": "node --test scripts/**/*.test.ts src/**/*.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

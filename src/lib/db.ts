@@ -1,4 +1,5 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import type { CohortTotal, Gender, NameRecord } from "./names.ts";
 
 let sql: NeonQueryFunction<false, false> | null = null;
 
@@ -89,4 +90,30 @@ async function createSchema(): Promise<void> {
       value text
     )
   `;
+}
+
+export async function getNames(): Promise<{ names: NameRecord[]; cohorts: CohortTotal[] }> {
+  await ensureSchema();
+  const dbSql = getSql();
+
+  const [nameRows, cohortRows] = await Promise.all([
+    dbSql`SELECT name, gender, counts, latest_count, register_count FROM names`,
+    dbSql`SELECT year, gender, total FROM cohorts`,
+  ]);
+
+  const names: NameRecord[] = nameRows.map((row) => ({
+    name: row.name as string,
+    gender: row.gender as Gender,
+    counts: row.counts as Record<string, number>,
+    latestCount: row.latest_count as number,
+    registerCount: row.register_count as number,
+  }));
+
+  const cohorts: CohortTotal[] = cohortRows.map((row) => ({
+    year: row.year as number,
+    gender: row.gender as Gender,
+    total: row.total as number,
+  }));
+
+  return { names, cohorts };
 }
