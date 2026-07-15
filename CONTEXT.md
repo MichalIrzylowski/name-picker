@@ -17,7 +17,9 @@ _Avoid_: given name, forename, imię
 Whether a Name is a boy's or a girl's name. Every Name has exactly one, decided by which
 gender it was given to more often across all Cohorts. The source's rare contradictions
 (two girls registered as `ALEKSANDER`) are registration noise, not evidence of ambiguity.
-_Avoid_: sex, płeć
+Represented everywhere — data file, database, code — as `M` or `K` (Męski / Kobiecy), the
+source's own codes; never translated to `F`.
+_Avoid_: sex, płeć, F (for the female code)
 
 **Cohort**:
 All babies of one gender given first names in one calendar year. The unit Poland publishes
