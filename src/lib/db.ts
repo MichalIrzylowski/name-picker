@@ -1,5 +1,21 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import type { CohortTotal, Gender, NameRecord } from "./names.ts";
+import { colorForJoinOrder } from "./participants.ts";
+
+export type VoteValue = "love" | "maybe" | "no";
+
+export interface Participant {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface FamilyState {
+  participants: Participant[];
+  votes: Record<string, Record<string, VoteValue>>;
+  notes: Record<string, { authorId: string; text: string }[]>;
+  surname: string;
+}
 
 let sql: NeonQueryFunction<false, false> | null = null;
 
@@ -116,4 +132,86 @@ export async function getNames(): Promise<{ names: NameRecord[]; cohorts: Cohort
   }));
 
   return { names, cohorts };
+}
+
+export async function getState(): Promise<FamilyState> {
+  await ensureSchema();
+  const dbSql = getSql();
+
+  const [participantRows, voteRows, noteRows, settingsRows] = await Promise.all([
+    dbSql`SELECT id, name, color FROM participants`,
+    dbSql`SELECT name_id, participant_id, value FROM votes`,
+    dbSql`SELECT name_id, author_id, text FROM notes ORDER BY id`,
+    dbSql`SELECT value FROM settings WHERE key = 'surname'`,
+  ]);
+
+  const participants: Participant[] = participantRows.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    color: row.color as string,
+  }));
+
+  const votes: FamilyState["votes"] = {};
+  for (const row of voteRows) {
+    const nameId = row.name_id as string;
+    (votes[nameId] ??= {})[row.participant_id as string] = row.value as VoteValue;
+  }
+
+  const notes: FamilyState["notes"] = {};
+  for (const row of noteRows) {
+    const nameId = row.name_id as string;
+    (notes[nameId] ??= []).push({ authorId: row.author_id as string, text: row.text as string });
+  }
+
+  const surname = (settingsRows[0]?.value as string | undefined) ?? "";
+
+  return { participants, votes, notes, surname };
+}
+
+export async function addParticipant(name: string): Promise<Participant> {
+  await ensureSchema();
+  const dbSql = getSql();
+
+  const [{ count }] = await dbSql`SELECT COUNT(*)::int AS count FROM participants`;
+  const id = crypto.randomUUID();
+  const color = colorForJoinOrder(count as number);
+
+  await dbSql`INSERT INTO participants (id, name, color) VALUES (${id}, ${name}, ${color})`;
+  return { id, name, color };
+}
+
+export async function removeParticipant(id: string): Promise<void> {
+  await ensureSchema();
+  const dbSql = getSql();
+  await dbSql`DELETE FROM participants WHERE id = ${id}`;
+}
+
+export async function castVote(
+  nameId: string,
+  participantId: string,
+  value: VoteValue,
+): Promise<void> {
+  await ensureSchema();
+  const dbSql = getSql();
+  await dbSql`
+    INSERT INTO votes (name_id, participant_id, value)
+    VALUES (${nameId}, ${participantId}, ${value})
+    ON CONFLICT (name_id, participant_id) DO UPDATE SET value = excluded.value
+  `;
+}
+
+export async function addNote(nameId: string, authorId: string, text: string): Promise<void> {
+  await ensureSchema();
+  const dbSql = getSql();
+  await dbSql`INSERT INTO notes (name_id, author_id, text) VALUES (${nameId}, ${authorId}, ${text})`;
+}
+
+export async function setSurname(surname: string): Promise<void> {
+  await ensureSchema();
+  const dbSql = getSql();
+  await dbSql`
+    INSERT INTO settings (key, value)
+    VALUES ('surname', ${surname})
+    ON CONFLICT (key) DO UPDATE SET value = excluded.value
+  `;
 }
