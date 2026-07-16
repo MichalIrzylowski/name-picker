@@ -1,14 +1,15 @@
 "use client";
 
 import { useNamePicker, type TabId, type UseNamePicker } from "./use-name-picker";
+import { computeMatches, resolveSelection } from "@/lib/matches";
 import { Onboarding } from "./Onboarding";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
 import { SwipeTab } from "./SwipeTab";
 import { ListTab } from "./ListTab";
+import { SharedTab } from "./SharedTab";
 
-const TAB_PLACEHOLDER_LABEL: Record<Exclude<TabId, "swipe" | "list">, string> = {
-  shared: "Razem — wkrótce",
+const TAB_PLACEHOLDER_LABEL: Record<Exclude<TabId, "swipe" | "list" | "shared">, string> = {
   family: "Rodzina — wkrótce",
 };
 
@@ -32,6 +33,14 @@ function Body({ picker }: { picker: UseNamePicker }) {
     );
   }
 
+  const matchCount = picker.familyState
+    ? computeMatches(
+        picker.names,
+        picker.familyState.votes,
+        resolveSelection(picker.familyState.participants, picker.matchSelection),
+      ).length
+    : 0;
+
   return (
     <>
       <Header currentUser={picker.currentUser} onGoFamily={() => picker.setTab("family")} />
@@ -42,13 +51,15 @@ function Body({ picker }: { picker: UseNamePicker }) {
           <SwipeTab picker={picker} />
         ) : picker.tab === "list" ? (
           <ListTab picker={picker} />
+        ) : picker.tab === "shared" ? (
+          <SharedTab picker={picker} />
         ) : (
           <div className="flex min-h-full items-center justify-center p-6 text-center text-sm opacity-70">
             {TAB_PLACEHOLDER_LABEL[picker.tab]}
           </div>
         )}
       </main>
-      <BottomNav active={picker.tab} onChange={picker.setTab} />
+      <BottomNav active={picker.tab} onChange={picker.setTab} matchCount={matchCount} />
     </>
   );
 }

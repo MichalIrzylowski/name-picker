@@ -12,9 +12,10 @@ const TABS: { id: TabId; label: string }[] = [
 interface BottomNavProps {
   active: TabId;
   onChange: (tab: TabId) => void;
+  matchCount: number;
 }
 
-export function BottomNav({ active, onChange }: BottomNavProps) {
+export function BottomNav({ active, onChange, matchCount }: BottomNavProps) {
   return (
     <nav
       className="flex px-2 pt-[5px]"
@@ -26,6 +27,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
     >
       {TABS.map((t) => {
         const isActive = active === t.id;
+        const label = t.id === "shared" && matchCount > 0 ? `${t.label} · ${matchCount}` : t.label;
         return (
           <button
             key={t.id}
@@ -40,7 +42,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
             >
               ◆
             </span>
-            <span>{t.label}</span>
+            <span>{label}</span>
           </button>
         );
       })}
