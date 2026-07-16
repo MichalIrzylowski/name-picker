@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { deckPool, shuffled } from "@/lib/deck";
 import type { NameApiItem } from "@/lib/names";
 import type { FamilyState, Participant, VoteValue } from "@/lib/db";
 
@@ -62,7 +63,9 @@ export interface UseNamePicker {
   setPopularityFilter: (value: PopularityFilter) => void;
 
   // Swipe card state
+  deckOrder: string[];
   swipeAnim: VoteValue | null;
+  setSwipeAnim: (value: VoteValue | null) => void;
   noteOpen: boolean;
   setNoteOpen: (open: boolean) => void;
   noteDraft: string;
@@ -104,7 +107,7 @@ export function useNamePicker(): UseNamePicker {
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
   const [popularityFilter, setPopularityFilter] = useState<PopularityFilter>("all");
 
-  const [swipeAnim] = useState<VoteValue | null>(null);
+  const [swipeAnim, setSwipeAnim] = useState<VoteValue | null>(null);
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
@@ -132,6 +135,12 @@ export function useNamePicker(): UseNamePicker {
       cancelled = true;
     };
   }, []);
+
+  // Swipe order is randomized once per page load, not re-shuffled on every
+  // visit to the Swipe tab — hence living here (persists for the session) and
+  // keyed on the `names` reference, which only changes once (names are
+  // fetched once, above), rather than as SwipeTab's own local state.
+  const deckOrder = useMemo(() => shuffled(deckPool(names)).map((n) => n.name), [names]);
 
   const fetchState = useCallback(() => {
     fetch("/api/state")
@@ -359,7 +368,9 @@ export function useNamePicker(): UseNamePicker {
     popularityFilter,
     setPopularityFilter,
 
+    deckOrder,
     swipeAnim,
+    setSwipeAnim,
     noteOpen,
     setNoteOpen,
     noteDraft,
