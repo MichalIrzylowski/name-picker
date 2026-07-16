@@ -101,10 +101,10 @@ export function SwipeTab({ picker }: SwipeTabProps) {
   const cardTransition = swipeAnim ? "transform .3s ease, opacity .3s ease" : "none";
 
   const notesForCurrent = current ? (familyState.notes[current.name] ?? []) : [];
-  const noteAuthorName = (authorId: string) =>
-    familyState.participants.find((p) => p.id === authorId)?.name ?? authorId;
-  const noteAuthorColor = (authorId: string) =>
-    familyState.participants.find((p) => p.id === authorId)?.color ?? "#8A7A5F";
+  const findParticipant = (participantId: string) =>
+    familyState.participants.find((p) => p.id === participantId);
+  const noteAuthorName = (authorId: string) => findParticipant(authorId)?.name ?? authorId;
+  const noteAuthorColor = (authorId: string) => findParticipant(authorId)?.color ?? "#8A7A5F";
 
   const surname = familyState.surname.trim();
   const isGirl = current?.gender === "K";
