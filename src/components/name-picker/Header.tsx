@@ -4,10 +4,10 @@ import type { Participant } from "@/lib/db";
 
 interface HeaderProps {
   currentUser: Participant;
-  onGoFamily: () => void;
+  onSwitchProfile: () => void;
 }
 
-export function Header({ currentUser, onGoFamily }: HeaderProps) {
+export function Header({ currentUser, onSwitchProfile }: HeaderProps) {
   return (
     <header className="flex items-end justify-between gap-3 px-[18px] pb-2.5 pt-4">
       <div
@@ -18,7 +18,7 @@ export function Header({ currentUser, onGoFamily }: HeaderProps) {
       </div>
       <button
         type="button"
-        onClick={onGoFamily}
+        onClick={onSwitchProfile}
         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-foreground"
         style={{
           background: "rgba(247,239,221,.08)",
