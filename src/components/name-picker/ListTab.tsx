@@ -26,7 +26,7 @@ const POPULARITY_OPTIONS: { value: PopularityFilter; label: string }[] = [
 
 const VOTE_ORDER: VoteValue[] = ["no", "maybe", "love"];
 
-function Chip<T extends string>({
+function Chip({
   active,
   label,
   onClick,
@@ -104,11 +104,13 @@ function ListRow({
             {displayName(name.name)}
           </span>
           <span
-            className="shrink-0 text-[10px] uppercase"
+            className="shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase"
             style={{
               fontFamily: "var(--font-ibm-plex-mono), monospace",
               letterSpacing: ".05em",
-              color: "rgba(247,239,221,.55)",
+              color: "rgba(247,239,221,.75)",
+              background: "rgba(247,239,221,.08)",
+              border: "1px solid rgba(247,239,221,.2)",
             }}
           >
             {name.popularity}
