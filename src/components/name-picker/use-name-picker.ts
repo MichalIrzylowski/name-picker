@@ -45,6 +45,9 @@ export interface UseNamePicker {
   selectParticipant: (id: string) => void;
   addParticipant: (name: string) => Promise<void>;
 
+  // Family-tab participant management
+  addFamilyMember: (name: string) => Promise<void>;
+
   // Profile switching
   switchProfileOpen: boolean;
   askSwitchProfile: () => void;
@@ -210,9 +213,9 @@ export function useNamePicker(): UseNamePicker {
     localStorage.setItem(CURRENT_USER_STORAGE_KEY, id);
   }, []);
 
-  const addParticipant = useCallback(async (name: string) => {
+  const postParticipant = useCallback(async (name: string): Promise<Participant | null> => {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed) return null;
 
     try {
       const res = await fetch("/api/participants", {
@@ -226,14 +229,35 @@ export function useNamePicker(): UseNamePicker {
       setFamilyState((prev) =>
         prev ? { ...prev, participants: [...prev.participants, participant] } : prev,
       );
+      setError(null);
+      return participant;
+    } catch {
+      setError("Nie udało się dodać osoby.");
+      return null;
+    }
+  }, []);
+
+  // Onboarding: adding yourself also claims the new Participant as this device's identity.
+  const addParticipant = useCallback(
+    async (name: string) => {
+      const participant = await postParticipant(name);
+      if (!participant) return;
+
       setCurrentUserId(participant.id);
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, participant.id);
       setOnboardingNewName("");
-      setError(null);
-    } catch {
-      setError("Nie udało się dodać osoby.");
-    }
-  }, []);
+    },
+    [postParticipant],
+  );
+
+  // Family tab: adding a family member on their behalf must not switch this
+  // device's own identity to them (see ADR 0009).
+  const addFamilyMember = useCallback(
+    async (name: string) => {
+      await postParticipant(name);
+    },
+    [postParticipant],
+  );
 
   const askSwitchProfile = useCallback(() => setSwitchProfileOpen(true), []);
   const cancelSwitchProfile = useCallback(() => setSwitchProfileOpen(false), []);
@@ -353,6 +377,7 @@ export function useNamePicker(): UseNamePicker {
     setOnboardingNewName,
     selectParticipant,
     addParticipant,
+    addFamilyMember,
 
     switchProfileOpen,
     askSwitchProfile,

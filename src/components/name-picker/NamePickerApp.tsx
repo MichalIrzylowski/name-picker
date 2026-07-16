@@ -1,6 +1,6 @@
 "use client";
 
-import { useNamePicker, type TabId, type UseNamePicker } from "./use-name-picker";
+import { useNamePicker, type UseNamePicker } from "./use-name-picker";
 import { computeMatches, resolveSelection } from "@/lib/matches";
 import { Onboarding } from "./Onboarding";
 import { Header } from "./Header";
@@ -8,10 +8,8 @@ import { BottomNav } from "./BottomNav";
 import { SwipeTab } from "./SwipeTab";
 import { ListTab } from "./ListTab";
 import { SharedTab } from "./SharedTab";
-
-const TAB_PLACEHOLDER_LABEL: Record<Exclude<TabId, "swipe" | "list" | "shared">, string> = {
-  family: "Rodzina — wkrótce",
-};
+import { FamilyTab } from "./FamilyTab";
+import { ConfirmModal } from "./ConfirmModal";
 
 const SHELL_STYLE: React.CSSProperties = {
   backgroundImage: "radial-gradient(rgba(247,239,221,0.055) 1.4px, rgba(0,0,0,0) 1.5px)",
@@ -43,7 +41,7 @@ function Body({ picker }: { picker: UseNamePicker }) {
 
   return (
     <>
-      <Header currentUser={picker.currentUser} onGoFamily={() => picker.setTab("family")} />
+      <Header currentUser={picker.currentUser} onSwitchProfile={picker.askSwitchProfile} />
       <main
         className={`flex-1 overflow-x-hidden ${picker.tab === "list" ? "overflow-hidden" : "overflow-y-auto"}`}
       >
@@ -54,12 +52,19 @@ function Body({ picker }: { picker: UseNamePicker }) {
         ) : picker.tab === "shared" ? (
           <SharedTab picker={picker} />
         ) : (
-          <div className="flex min-h-full items-center justify-center p-6 text-center text-sm opacity-70">
-            {TAB_PLACEHOLDER_LABEL[picker.tab]}
-          </div>
+          <FamilyTab picker={picker} />
         )}
       </main>
       <BottomNav active={picker.tab} onChange={picker.setTab} matchCount={matchCount} />
+      {picker.switchProfileOpen && (
+        <ConfirmModal
+          title="Zmienić profil?"
+          message="Wrócisz do ekranu wyboru osoby. Nikt nie zostanie usunięty."
+          confirmLabel="Zmień"
+          onCancel={picker.cancelSwitchProfile}
+          onConfirm={picker.confirmSwitchProfile}
+        />
+      )}
     </>
   );
 }
