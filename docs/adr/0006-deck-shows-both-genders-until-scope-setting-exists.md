@@ -1,5 +1,9 @@
 # Deck shows both genders until a gender-scope setting exists
 
+> **Superseded by ADR 0010** (`0010-persisted-gender-scope-setting.md`): a persisted
+> `genderScope` setting now exists and the Deck narrows by it. The gap described below is
+> closed; kept here for history.
+
 CONTEXT.md's Deck definition says the Deck is "narrowed to the family's chosen Gender," but no
 family-wide gender-scope setting was ever built — `settings` only holds `surname` (#4), and
 `nameScope` in `use-name-picker.ts` is local, unpersisted UI state for the Family tab's own

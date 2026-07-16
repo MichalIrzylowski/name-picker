@@ -1,9 +1,9 @@
-import type { VoteValue } from "./db.ts";
+import type { GenderScope, VoteValue } from "./db.ts";
 import type { NameApiItem } from "./names.ts";
 
-/** Names offered for swiping — the Deck floor, gender scope narrowing is not built yet (ADR 0006). */
-export function deckPool(names: NameApiItem[]): NameApiItem[] {
-  return names.filter((n) => n.inDeck);
+/** Names offered for swiping — the Deck floor, narrowed to the family's chosen gender scope. */
+export function deckPool(names: NameApiItem[], genderScope: GenderScope): NameApiItem[] {
+  return names.filter((n) => n.inDeck && (genderScope === "all" || n.gender === genderScope));
 }
 
 /** Fisher-Yates, with an injectable random source so callers can seed it for tests. */
