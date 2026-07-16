@@ -5,9 +5,9 @@ import { Onboarding } from "./Onboarding";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
 import { SwipeTab } from "./SwipeTab";
+import { ListTab } from "./ListTab";
 
-const TAB_PLACEHOLDER_LABEL: Record<Exclude<TabId, "swipe">, string> = {
-  list: "Imiona — wkrótce",
+const TAB_PLACEHOLDER_LABEL: Record<Exclude<TabId, "swipe" | "list">, string> = {
   shared: "Razem — wkrótce",
   family: "Rodzina — wkrótce",
 };
@@ -35,9 +35,13 @@ function Body({ picker }: { picker: UseNamePicker }) {
   return (
     <>
       <Header currentUser={picker.currentUser} onGoFamily={() => picker.setTab("family")} />
-      <main className="flex-1 overflow-y-auto overflow-x-hidden">
+      <main
+        className={`flex-1 overflow-x-hidden ${picker.tab === "list" ? "overflow-hidden" : "overflow-y-auto"}`}
+      >
         {picker.tab === "swipe" ? (
           <SwipeTab picker={picker} />
+        ) : picker.tab === "list" ? (
+          <ListTab picker={picker} />
         ) : (
           <div className="flex min-h-full items-center justify-center p-6 text-center text-sm opacity-70">
             {TAB_PLACEHOLDER_LABEL[picker.tab]}
