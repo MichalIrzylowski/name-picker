@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Participant } from "@/lib/db";
+import type { GenderScope, Participant } from "@/lib/db";
 import type { UseNamePicker } from "./use-name-picker";
 import { ConfirmModal } from "./ConfirmModal";
+
+const GENDER_SCOPE_OPTIONS: { value: GenderScope; label: string; color: string }[] = [
+  { value: "M", label: "Chłopiec", color: "#2F6B52" },
+  { value: "K", label: "Dziewczynka", color: "#C24328" },
+  { value: "all", label: "Wszystkie", color: "#8A7A5F" },
+];
 
 interface FamilyTabProps {
   picker: UseNamePicker;
@@ -129,6 +135,35 @@ export function FamilyTab({ picker }: FamilyTabProps) {
           className="mt-2 w-full rounded-xl px-3.5 py-3 text-sm text-foreground"
           style={{ background: "rgba(247,239,221,.08)", border: "1px solid rgba(247,239,221,.3)" }}
         />
+      </div>
+
+      <div>
+        <div
+          className="text-[10.5px] font-semibold uppercase"
+          style={{ letterSpacing: ".16em", color: "rgba(242,163,27,.9)" }}
+        >
+          Zakres płci
+        </div>
+        <div className="mt-2 flex gap-2">
+          {GENDER_SCOPE_OPTIONS.map((option) => {
+            const active = (picker.familyState?.genderScope ?? "all") === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => picker.setGenderScope(option.value)}
+                className="flex-1 rounded-xl px-3 py-3 text-[13px] font-semibold"
+                style={{
+                  background: active ? option.color : "rgba(247,239,221,.08)",
+                  border: `1px solid ${active ? option.color : "rgba(247,239,221,.3)"}`,
+                  color: active ? "#F7EFDD" : "rgba(247,239,221,.85)",
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {removeTarget && (

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deckPool, shuffled } from "@/lib/deck";
 import type { GenderFilter, PopularityFilter } from "@/lib/list";
 import type { NameApiItem } from "@/lib/names";
-import type { FamilyState, Participant, VoteValue } from "@/lib/db";
+import type { FamilyState, GenderScope, Participant, VoteValue } from "@/lib/db";
 
 export type { GenderFilter, PopularityFilter } from "@/lib/list";
 
@@ -87,6 +87,7 @@ export interface UseNamePicker {
   castVote: (nameId: string, value: VoteValue) => void;
   addNote: (nameId: string, text: string) => void;
   setSurname: (surname: string) => void;
+  setGenderScope: (genderScope: GenderScope) => void;
   removeParticipant: (id: string) => void;
 }
 
@@ -144,7 +145,11 @@ export function useNamePicker(): UseNamePicker {
   // visit to the Swipe tab — hence living here (persists for the session) and
   // keyed on the `names` reference, which only changes once (names are
   // fetched once, above), rather than as SwipeTab's own local state.
-  const deckOrder = useMemo(() => shuffled(deckPool(names)).map((n) => n.name), [names]);
+  const genderScope = familyState?.genderScope ?? "all";
+  const deckOrder = useMemo(
+    () => shuffled(deckPool(names, genderScope)).map((n) => n.name),
+    [names, genderScope],
+  );
 
   const fetchState = useCallback(() => {
     fetch("/api/state")
@@ -342,6 +347,21 @@ export function useNamePicker(): UseNamePicker {
     );
   }, []);
 
+  const setGenderScope = useCallback((genderScope: GenderScope) => {
+    setFamilyState((prev) => (prev ? { ...prev, genderScope } : prev));
+
+    sendMutation(
+      "/api/settings",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ genderScope }),
+      },
+      setError,
+      "Nie udało się zapisać zakresu płci.",
+    );
+  }, []);
+
   const removeParticipant = useCallback(
     (id: string) => {
       setFamilyState((prev) =>
@@ -411,6 +431,7 @@ export function useNamePicker(): UseNamePicker {
     castVote,
     addNote,
     setSurname,
+    setGenderScope,
     removeParticipant,
   };
 }

@@ -14,11 +14,39 @@ function item(name: string, inDeck: boolean): NameApiItem {
   };
 }
 
+function itemWithGender(name: string, gender: "M" | "K"): NameApiItem {
+  return { ...item(name, true), gender };
+}
+
 test("deckPool keeps only names with inDeck true", () => {
   const names = [item("JAN", true), item("TYMEK", false), item("ADA", true)];
   assert.deepEqual(
-    deckPool(names).map((n) => n.name),
+    deckPool(names, "all").map((n) => n.name),
     ["JAN", "ADA"],
+  );
+});
+
+test("deckPool narrows to M when genderScope is M", () => {
+  const names = [itemWithGender("JAN", "M"), itemWithGender("ADA", "K")];
+  assert.deepEqual(
+    deckPool(names, "M").map((n) => n.name),
+    ["JAN"],
+  );
+});
+
+test("deckPool narrows to K when genderScope is K", () => {
+  const names = [itemWithGender("JAN", "M"), itemWithGender("ADA", "K")];
+  assert.deepEqual(
+    deckPool(names, "K").map((n) => n.name),
+    ["ADA"],
+  );
+});
+
+test("deckPool still excludes names outside the deck even within the chosen gender scope", () => {
+  const names = [itemWithGender("JAN", "M"), { ...itemWithGender("TYMEK", "M"), inDeck: false }];
+  assert.deepEqual(
+    deckPool(names, "M").map((n) => n.name),
+    ["JAN"],
   );
 });
 

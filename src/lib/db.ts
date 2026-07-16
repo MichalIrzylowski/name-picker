@@ -3,6 +3,11 @@ import type { CohortTotal, Gender, NameRecord } from "./names.ts";
 import { colorForJoinOrder } from "./participants.ts";
 
 export type VoteValue = "love" | "maybe" | "no";
+export type GenderScope = "all" | Gender;
+
+export function isGenderScope(value: unknown): value is GenderScope {
+  return value === "all" || value === "M" || value === "K";
+}
 
 export interface Participant {
   id: string;
@@ -15,6 +20,7 @@ export interface FamilyState {
   votes: Record<string, Record<string, VoteValue>>;
   notes: Record<string, { authorId: string; text: string }[]>;
   surname: string;
+  genderScope: GenderScope;
 }
 
 let sql: NeonQueryFunction<false, false> | null = null;
@@ -142,7 +148,7 @@ export async function getState(): Promise<FamilyState> {
     dbSql`SELECT id, name, color FROM participants`,
     dbSql`SELECT name_id, participant_id, value FROM votes`,
     dbSql`SELECT name_id, author_id, text FROM notes ORDER BY id`,
-    dbSql`SELECT value FROM settings WHERE key = 'surname'`,
+    dbSql`SELECT key, value FROM settings WHERE key IN ('surname', 'genderScope')`,
   ]);
 
   const participants: Participant[] = participantRows.map((row) => ({
@@ -163,9 +169,12 @@ export async function getState(): Promise<FamilyState> {
     (notes[nameId] ??= []).push({ authorId: row.author_id as string, text: row.text as string });
   }
 
-  const surname = (settingsRows[0]?.value as string | undefined) ?? "";
+  const settingsByKey = new Map(settingsRows.map((row) => [row.key as string, row.value as string]));
+  const surname = settingsByKey.get("surname") ?? "";
+  const genderScopeValue = settingsByKey.get("genderScope");
+  const genderScope = isGenderScope(genderScopeValue) ? genderScopeValue : "all";
 
-  return { participants, votes, notes, surname };
+  return { participants, votes, notes, surname, genderScope };
 }
 
 export async function addParticipant(name: string): Promise<Participant> {
@@ -212,6 +221,16 @@ export async function setSurname(surname: string): Promise<void> {
   await dbSql`
     INSERT INTO settings (key, value)
     VALUES ('surname', ${surname})
+    ON CONFLICT (key) DO UPDATE SET value = excluded.value
+  `;
+}
+
+export async function setGenderScope(genderScope: GenderScope): Promise<void> {
+  await ensureSchema();
+  const dbSql = getSql();
+  await dbSql`
+    INSERT INTO settings (key, value)
+    VALUES ('genderScope', ${genderScope})
     ON CONFLICT (key) DO UPDATE SET value = excluded.value
   `;
 }
