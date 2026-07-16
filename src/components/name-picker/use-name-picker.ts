@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deckPool, shuffled } from "@/lib/deck";
+import type { GenderFilter, PopularityFilter } from "@/lib/list";
 import type { NameApiItem } from "@/lib/names";
 import type { FamilyState, Participant, VoteValue } from "@/lib/db";
+
+export type { GenderFilter, PopularityFilter } from "@/lib/list";
 
 const CURRENT_USER_STORAGE_KEY = "namePicker.currentUserId";
 const STATE_POLL_INTERVAL_MS = 5000;
@@ -24,8 +27,6 @@ function sendMutation(
 }
 
 export type TabId = "swipe" | "list" | "shared" | "family";
-export type GenderFilter = "all" | "M" | "K";
-export type PopularityFilter = "all" | "pop" | "mid" | "rare";
 
 export interface UseNamePicker {
   // Loading / errors
